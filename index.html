@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            list-style: none;
+        }
+
+        #box {
+            width: 400px;
+            height: 160px;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            margin: -80px 0 0 -250px;
+        }
+
+        .line {
+            width: 400px;
+            min-height: 40px;
+            clear: both;
+            position: relative;
+        }
+
+        label, .input, input {
+            float: left;
+        }
+
+        .input {
+            width: 300px;
+            min-height: 30px;
+            border: 1px solid #000000;
+            cursor: not-allowed;
+        }
+
+        input {
+            cursor: pointer;
+            margin-top: 8px;
+        }
+
+        .al {
+            width: 100px;
+            max-height: 250px;
+            border: 1px solid #000000;
+            position: absolute;
+            top: 28px;
+            left: 373px;
+            overflow-y: auto;
+            background: #ffffff;
+            z-index: 1;
+            display: none;
+        }
+
+        .al span:hover {
+            background: lightblue;
+        }
+
+        .cur {
+            background: lightblue;
+        }
+
+        span,a {
+            cursor: pointer;
+        }
+        a{color:red;}
+
+        .input span {
+            display: inline-block;
+            position: relative;
+            margin-right: 20px;
+        }
+
+        em {
+            background: url("img/delete.png") no-repeat;
+            width: 13px;
+            height: 13px;
+            position: absolute;
+            right: -13px;
+            top: 0;
+        }
+    </style>
+</head>
+<body>
+<div id="box">
+    <div id="line_1000" class="line">
+        <label>地点：</label>
+        <div id="input_1000" class="input"></div>
+        <input type="button" value="+" id="btn1_1000" class="btn1">
+        <input type="button" value="-" id="btn2_1000" class="btn2">
+        <div class="al" id="ale_1000"></div>
+    </div>
+    <div id="line_2000" class="line">
+        <label>时间：</label>
+        <div id="input_2000" class="input"></div>
+        <input type="button" value="+" id="btn1_2000" class="btn1">
+        <input type="button" value="-" id="btn2_2000" class="btn2">
+        <div class="al" id="ale_2000"></div>
+    </div>
+    <div id="line_3000" class="line">
+        <label>领导：</label>
+        <div id="input_3000" class="input"></div>
+        <input type="button" value="+" id="btn1_3000" class="btn1">
+        <input type="button" value="-" id="btn2_3000" class="btn2">
+        <div class="al" id="ale_3000"></div>
+    </div>
+    <div id="line_4000" class="line">
+        <label>部门：</label>
+        <div id="input_4000" class="input"></div>
+        <input type="button" value="+" id="btn1_4000" class="btn1">
+        <input type="button" value="-" id="btn2_4000" class="btn2">
+        <div class="al" id="ale_4000"></div>
+    </div>
+</div>
+<script src="js/jquery-3.1.1.min.js"></script>
+<script>
+    function popup(id, type, data) {
+        var $al = $("#ale_" + id);
+        var $ul = $("<ul>");
+        var $li = null;
+        var $main = $("#input_" + id);
+
+        //点击其他区域，关闭弹层
+        $(document).off().on("click", function () {
+            closeOther();
+        });
+
+        $("#line_" + id).off().on("click", function () {
+            return false;
+        });
+        //点击出弹层--主程序
+        $("#btn1_" + id).on("click", function () {
+            closeOther();
+            if(!$al.find("span").length){
+                addContent();
+            }
+            $("#ale_" + id).show();
+            if (type == 1) {
+                bindColorRadio();
+            } else if (type == 2) {
+                bindColorMore();
+            }
+        });
+
+        //弹层添加内容-公用
+        function addContent() {
+            var $A = $("<li><a href='javascript:;'>全选</a></li>");
+            $.each(data, function () {
+                $li = $("<li><span>" + this.name + "</span></li>");
+                $ul.append($li);
+            });
+            if(type==2){
+                $ul.prepend($A);
+            }
+            $al.append($ul);
+        }
+
+        // 点击无关元素关闭弹层
+        function closeOther() {
+            $(".al").hide();
+        }
+
+        //点击添加弹窗背景,单选
+        function bindColorRadio() {
+            $al.find("span").on("click", function () {
+                if ($(this).attr("class") != "cur") {
+                    $al.find("span").attr("class", "");
+                    $(this).attr("class", "cur").parent().attr("index", $(this).parent().index());
+                    inputRadio.add($(this).html(), $(this).parent().index());
+                } else {
+                    $(this).removeClass();
+                    inputRadio.remove();
+                }
+            });
+        }
+
+        //点击添加弹窗背景,多选
+        function bindColorMore() {
+            $al.find("span").on("click", function () {
+                if ($(this).attr("class") != "cur") {
+                    $(this).attr("class", "cur").parent().attr("index", $(this).parent().index());
+                    inputMore.add($(this).html(), $(this).parent().index());
+                } else {
+                    $(this).attr("class", "");
+                    inputMore.remove($(this).parent().index());
+                }
+            });
+            $al.find("a").on("click",function () {
+                $al.find("span").each(function () {
+                    if($(this).attr("class")!="cur"){
+                        $(this).trigger("click");
+                    }
+                });
+            });
+        }
+
+        //点击span添加输入框或删除输入框中的内容-单选
+        var inputRadio = (function () {
+            function add(text, index) {
+                var $span = "<span nowIndex="+index+">" + text + "<em></em></span>";
+                $main.html($span);
+            }
+
+            function remove() {
+                $main.empty();
+            }
+
+            return {
+                add: add,
+                remove: remove
+            }
+        })();
+
+        //点击span添加输入框或删除输入框中的内容-多选
+        var inputMore = (function () {
+            function add(text, index) {
+                var $span = $("<span nowIndex="+index+">" + text + "<em></em></span>");
+                $main.append($span);
+            }
+
+            function remove(index) {
+                $main.find("span").each(function () {
+                    if ($(this).attr("nowIndex") == index) {
+                        $(this).remove();
+                    }
+                })
+            }
+
+            return {
+                add: add,
+                remove: remove
+            }
+        })();
+        $("em").on("click",function () {
+            alert(11);
+            //$(this).parent().remove();
+        });
+        /*bindRemoveText();*/
+        //点击查号删除元素
+        /*function bindRemoveText() {
+            $main.find("em").on("click", function () {
+                var $parent = $(this).parent();
+                var This = this;
+                $parent.remove();
+                $al.find('span').each(function () {
+                    if ($parent.attr('nowIndex') == $(this).parent().index()) {
+                        $(this).attr('class', '');
+                    }
+                });
+            });*/
+            $main.on('click','em',function(){
+                var $parent = $(this).parent();
+                var This = this;
+                $parent.remove();
+                $al.find('span').each(function(){
+                    if( $parent.attr('nowIndex') == $(this).parent().index() ){
+                        $(this).attr('class','');
+                    }
+                });
+            });
+
+        //删除按钮操作
+        bindRemoveBtn();
+        function bindRemoveBtn(){
+            $('#btn2_'+id).on('click',function(){
+                $main.find('em').each(function(){
+                    $(this).trigger('click');
+                });
+            });
+        }
+
+    }
+    popup('1000', 1, [
+        {name: '办公室'},
+        {name: '会议室'},
+        {name: '室外'},
+        {name: '咖啡厅'}
+    ]);
+
+    popup('2000', 1, [
+        {name: '8:00~10:00'},
+        {name: '12:00~13:00'},
+        {name: '14:00~16:00'},
+        {name: '20:00~23:00'},
+        {name: '23:00~00:00'}
+    ]);
+
+    popup('3000', 2, [
+        {name: '李彦宏1'},
+        {name: '马云1'},
+        {name: '马化腾1'},
+        {name: '李彦宏2'},
+        {name: '马云2'},
+        {name: '马化腾2'},
+        {name: '李彦宏3'},
+        {name: '马云3'},
+        {name: '马化腾3'},
+        {name: '李彦宏4'},
+        {name: '马云4'},
+        {name: '马化腾4'},
+        {name: '李彦宏5'},
+        {name: '马云5'},
+        {name: '马化腾5'},
+        {name: '李彦宏6'},
+        {name: '马云6'},
+        {name: '马化腾6'},
+        {name: '李彦宏7'},
+        {name: '马云7'},
+        {name: '马化腾7'}
+    ]);
+
+    popup('4000', 2, [
+        {name: '采购部'},
+        {name: '销售部'},
+        {name: '策划部'},
+        {name: '运维中心'},
+        {name: 'IT部'},
+        {name: '人力资源'},
+        {name: '行政部门'},
+        {name: '公关部'},
+        {name: '法务部门'},
+        {name: '市场部'},
+        {name: '运营部'},
+        {name: '游戏部门'},
+        {name: '社区部门'},
+        {name: '电商部门'},
+        {name: '客服部'}
+    ]);
+</script>
+</body>
+</html>
